@@ -20,7 +20,7 @@ public class JavaFXTemplate extends Application {
 		
 		
 		
-				
+		//Test Commit
 		Scene scene = new Scene(new VBox(), 700,700);
 		primaryStage.setScene(scene);
 		primaryStage.show();
