@@ -23,6 +23,46 @@ import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.Arrays;
+
+/*
+Notes for Stefan:
+
+Data members of note
+puzzles is an ArrayList of int arrays that holds all the puzzles
+
+gamePuzzle is initialized to the first index of the puzzles array and will contain the puzzle that will be used for
+the current game session, and it is the int array that is passed to the AI solver, gamePuzzle is what should be used
+to check for wins.
+
+solutionArray is the hardcoded win state for the game
+
+Methods of note
+addGrid(GridPane pane, int[] arr)
+Takes in the gameBoard and the game puzzle array. Will clear the board and fill it back up according to the layout
+of the game puzzle array passed in. Should be used to animate changes or when declaring a new game
+
+h1Handler
+h2Handler
+Both handlers send a ArrayList of Node to the AI solver that returns the solution path to the game
+
+showSolution()
+In the solution() method and called using Platform.runlater() the method will animate the moves the AI solver did using ArrayList<Node>
+since it will return the solution path. I already did the checking to make sure it does not show more than 10 moves.
+I think here is where code such a win check can go in the lambda of the pauseTransition action event
+
+A few thoughts, both the gamePuzzle and solutionArray are int[] so checking if they are the same should be straightforward
+remember the gamePuzzle is the internal array that changes according to actions made by the user.
+
+A few flags to be aware of
+gamePlayEnabled
+gameplay Menu
+newGame MenuItem
+
+I disable these during animation of the solution path to prevent unwanted errors, make sure the flags are reset
+when the AI solver returns a win path
+
+ */
 
 
 public class JavaFXTemplate extends Application {
@@ -38,7 +78,6 @@ public class JavaFXTemplate extends Application {
 
 	// Project 4 declarations
 	private ArrayList<int []> puzzles = new ArrayList<>();
-	private int[] starterPuzzle;
 	private int[] gamePuzzle;
 	// [0] = x cord [1] = y cord
 	private int zeroIndexCords[] = new int[2];
@@ -47,7 +86,6 @@ public class JavaFXTemplate extends Application {
 	private Boolean gamePlayEnabled = true;
 	private int[] solutionArray = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
 	ArrayList<Node> solutionPath;
-	private MenuBar menuBar;
 	private Menu gameplay;
 	private MenuItem newGame;
 
@@ -77,9 +115,6 @@ public class JavaFXTemplate extends Application {
 
 		// Project 4 declarations
 		puzzles.add(new int[] {2, 6, 10, 3, 1, 4, 7, 11, 8, 5, 9, 15, 12, 13, 14, 0});
-		puzzles.add(new int[] {0, 6, 10, 3, 1, 4, 7, 11, 8, 5, 9, 15, 12, 13, 14, 2});
-
-		starterPuzzle = puzzles.get(0);
 
 		gamePuzzle = puzzles.get(0);
 
@@ -231,7 +266,7 @@ public class JavaFXTemplate extends Application {
 				if (future.isDone()) {
 					try {
 						solutionPath = future.get();
-						Thread.sleep(500);
+						Thread.sleep(100);
 
 						//int[] arr = solutionPath.get(solutionPath.size() - 1).getKey();
 
@@ -250,7 +285,7 @@ public class JavaFXTemplate extends Application {
 		});
 	}
 
-	// Shows the solution
+	// Animates the solution using a pause transition so each move made by the ai can be clearly seen
 	private void showSolution() {
 		int showMax = 10;
 
@@ -285,6 +320,9 @@ public class JavaFXTemplate extends Application {
 					gameLog.getItems().add("Done showing");
 				}
 
+				if (Arrays.equals(gamePuzzle, solutionArray)) {
+					System.out.println("There was a win!");
+				}
 			});
 			pause.play();
 
@@ -298,7 +336,8 @@ public class JavaFXTemplate extends Application {
 		//System.out.println(Arrays.toString(gamePuzzle));
 	}
 
-	// Swap function which swaps the 0 button in both the puzzle array and the game array
+	// Swap function which swaps the 0 button in both the puzzle array and the game array the coordinates being passed in
+	// is the square where the 0 button is being moved to
 	private void swap (int x, int y) {
 		int target = Integer.parseInt(gameArr[x][y].getText());
 		System.out.println(target);
@@ -357,12 +396,12 @@ public class JavaFXTemplate extends Application {
 		gameplay.getItems().addAll(h1, h2);
 		options.getItems().addAll(howToPlay, newGame, exit);
 
-		menuBar = new MenuBar();
+		MenuBar menuBar = new MenuBar();
 		menuBar.getMenus().addAll(gameplay, options);
 
 		gameBoard.setMinWidth(300);
 		gameBoard.setMaxWidth(400);
-		addGrid(gameBoard, starterPuzzle);
+		addGrid(gameBoard, gamePuzzle);
 
 		gameLog.setEditable(true);
 		gameLog.setPrefSize(300, 200);
@@ -389,7 +428,7 @@ public class JavaFXTemplate extends Application {
 		return new Scene(gamePane, 700, 700);
 	}
 
-	// Loads the game buttons into the grid pane and into an internal 2d array to be used for game logic
+	// Load buttons into the grid pane and into an internal array to be used for game logic
 	private void addGrid(GridPane pane, int[] arr) {
 
 		pane.getChildren().removeAll();
