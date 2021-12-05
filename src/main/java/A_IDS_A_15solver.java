@@ -1,32 +1,19 @@
 import java.util.ArrayList;
+import java.util.concurrent.Callable;
 
-public class A_IDS_A_15solver {
+public class A_IDS_A_15solver implements Callable<ArrayList<Node>> {
 	
 	/*
 	 * @author Mark Hallenbeck
 	 * Copyright© 2014, Mark Hallenbeck, All Rights Reservered.
 	 */
 
-public A_IDS_A_15solver(){
-		
-		UserInterface puzzle = new UserInterface();			//class for reading in puzzle from user
-		
-		Node startState = new Node(puzzle.getPuzzle());		//node contains the start state of puzzle
-		
-		startState.setDepth(0);
-				
-		System.out.println("\nStarting A* Search with heuristic #1....This may take a while\n\n");
-		
-		A_Star(startState, "heuristicOne");							//A* search with heuristic 1 (misplaced tiles)
-		
-		System.out.println("\nStarting A* Search with heuristic #2....This may take a while\n\n");
-		
-		A_Star(startState, "heuristicTwo");							//A* search with heuristic 2 (manhattan)
-		
-		
-		System.out.println("\nThanks for using me to solve your 15 puzzle......Goodbye");
-		System.exit(1);
-		
+	int[] gamePuzzle;
+	String heuristic;
+
+	public A_IDS_A_15solver(int[] arr, String h){
+		gamePuzzle = arr;
+		heuristic = h;
 	}
 
 /**
@@ -35,7 +22,7 @@ public A_IDS_A_15solver(){
  * @param startState
  * @param heuristic
  */
-	public void A_Star(Node startState, String heuristic){
+	public ArrayList<Node> A_Star(Node startState, String heuristic){
 		
 				
 		DB_Solver2 start_A_Star = new DB_Solver2(startState, heuristic);	//DB_Solver class initialized with startState node
@@ -60,9 +47,11 @@ public A_IDS_A_15solver(){
 			printSolution(solutionPath);
 			
 			//System.out.println("\n$$$$$$$$$$$$$$ the solution path is "+ solutionPath.size()+ " moves long\n");
+
+			return solutionPath;
 		}
 		
-		
+		return null;
 	}
 	
 	
@@ -97,6 +86,37 @@ public A_IDS_A_15solver(){
 }
 
 
+	@Override
+	public ArrayList<Node> call() throws Exception {
+		//UserInterface puzzle = new UserInterface();			//class for reading in puzzle from user
+
+		//Node startState = new Node(puzzle.getPuzzle());		//node contains the start state of puzzle
+
+		Node startState = new Node(gamePuzzle);
+
+		startState.setDepth(0);
+
+		if (heuristic.equals("heuristicOne")) {
+			System.out.println("\nStarting A* Search with heuristic #1....This may take a while\n\n");
+		} else {
+			System.out.println("\nStarting A* Search with heuristic #2....This may take a while\n\n");
+		}
+
+		ArrayList<Node> path = A_Star(startState, heuristic);
 
 
+
+		//System.out.println("\nStarting A* Search with heuristic #1....This may take a while\n\n");
+
+		//A_Star(startState, "heuristicOne");							//A* search with heuristic 1 (misplaced tiles)
+
+		//System.out.println("\nStarting A* Search with heuristic #2....This may take a while\n\n");
+
+		//A_Star(startState, "heuristicTwo");							//A* search with heuristic 2 (manhattan)
+
+
+		System.out.println("\nThanks for using me to solve your 15 puzzle......Goodbye");
+
+		return path;
+	}
 }

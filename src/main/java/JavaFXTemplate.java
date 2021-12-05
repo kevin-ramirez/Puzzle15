@@ -1,3 +1,4 @@
+import javafx.animation.PauseTransition;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
@@ -17,7 +18,11 @@ import javafx.stage.WindowEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.layout.HBox;
+import javafx.util.Duration;
 import java.util.ArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 
 public class JavaFXTemplate extends Application {
@@ -26,7 +31,7 @@ public class JavaFXTemplate extends Application {
 	private static final int COLUMNS = 4;
 	private Stage howToPlay;
 	private Button exitGameBtn;
-	private EventHandler<ActionEvent> closeHandler, h1Handler,
+	private EventHandler<ActionEvent> closeHandler, h1Handler, h2Handler,
 			howToPlayHandler, newGameHandler;
 	private BorderPane gamePane;
 	private ListView<String> gameLog;
@@ -41,6 +46,10 @@ public class JavaFXTemplate extends Application {
 	private Button [][] gameArr = new Button[ROWS][COLUMNS];
 	private Boolean gamePlayEnabled = true;
 	private int[] solutionArray = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+	ArrayList<Node> solutionPath;
+	private MenuBar menuBar;
+	private Menu gameplay;
+	private MenuItem newGame;
 
 	public JavaFXTemplate() {
 	}
@@ -64,8 +73,11 @@ public class JavaFXTemplate extends Application {
 
 		primaryStage.setTitle("Welcome to Puzzle15");
 
+		ExecutorService ex = Executors.newFixedThreadPool(5);
+
 		// Project 4 declarations
 		puzzles.add(new int[] {2, 6, 10, 3, 1, 4, 7, 11, 8, 5, 9, 15, 12, 13, 14, 0});
+		puzzles.add(new int[] {0, 6, 10, 3, 1, 4, 7, 11, 8, 5, 9, 15, 12, 13, 14, 2});
 
 		starterPuzzle = puzzles.get(0);
 
@@ -101,7 +113,32 @@ public class JavaFXTemplate extends Application {
 		h1Handler = new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent actionEvent) {
-				System.out.println("Hello");
+				gameplay.setDisable(true);
+				gamePlayEnabled = false;
+				newGame.setDisable(true);
+				gameLog.getItems().add("Running heuristicOne");
+				try {
+					Future<ArrayList<Node>> future = ex.submit(new A_IDS_A_15solver(gamePuzzle, "heuristicOne"));
+					solution(future, ex);
+				} catch (Exception e) {
+					System.out.println(e);
+				}
+			}
+		};
+
+		h2Handler = new EventHandler<ActionEvent>() {
+			@Override
+			public void handle(ActionEvent actionEvent) {
+				gameplay.setDisable(true);
+				gamePlayEnabled = false;
+				newGame.setDisable(true);
+				gameLog.getItems().add("Running heuristicTwo");
+				try {
+					Future<ArrayList<Node>> future = ex.submit(new A_IDS_A_15solver(gamePuzzle, "heuristicTwo"));
+					solution(future, ex);
+				} catch (Exception e) {
+					System.out.println(e);
+				}
 			}
 		};
 		// End Handlers
@@ -177,12 +214,88 @@ public class JavaFXTemplate extends Application {
 						zeroIndexCords[1]++;
 					}
 				}
+			} else {
+				gameLog.getItems().add("Wait for solution to finish displaying.");
 			}
 		});
 
 		primaryStage.setScene(scene);
 		primaryStage.show();
 
+	}
+
+	// Retries the array list of nodes from the Callable of the ai to show part of the solution path
+	private void solution(Future<ArrayList<Node>> future, ExecutorService ex) {
+		ex.submit(() -> {
+			while (true) {
+				if (future.isDone()) {
+					try {
+						solutionPath = future.get();
+						Thread.sleep(500);
+
+						//int[] arr = solutionPath.get(solutionPath.size() - 1).getKey();
+
+						//System.out.println(Arrays.toString(arr));
+
+						Platform.runLater(() -> gameLog.getItems().add("AI solver has completed running."));
+						Platform.runLater(() -> gameLog.getItems().add("Showing Solution, do not touch anything."));
+						Platform.runLater(() -> showSolution());
+
+					} catch (Exception e) {
+						System.out.println(e);
+					}
+					break;
+				}
+			}
+		});
+	}
+
+	// Shows the solution
+	private void showSolution() {
+		int showMax = 10;
+
+		// Check to see if the solution path is greater than 10 moves
+		if (solutionPath.size() < 10) {
+			showMax = solutionPath.size();
+		}
+
+
+		for (int i = 0; i < showMax; i++) {
+			int[] currentState;
+
+			if (showMax != 10) {
+				currentState = solutionPath.get(i).getKey();
+			} else {
+				currentState = solutionPath.get(i + 1).getKey();
+			}
+
+			int pauseTime = i;
+
+			PauseTransition pause = new PauseTransition(Duration.seconds(pauseTime + 1));
+			pause.setOnFinished(event -> {
+				gamePuzzle = currentState;
+				addGrid(gameBoard, currentState);
+				int time = pauseTime + 1;
+				gameLog.getItems().add("Showing move " + time);
+
+				if (time == 9) {
+					gamePlayEnabled = true;
+					gameplay.setDisable(false);
+					newGame.setDisable(false);
+					gameLog.getItems().add("Done showing");
+				}
+
+			});
+			pause.play();
+
+			// For testing to show instant animation
+			//gamePuzzle = currentState;
+			//addGrid(gameBoard, currentState);
+
+			//System.out.println(Arrays.toString(currentState));
+
+		}
+		//System.out.println(Arrays.toString(gamePuzzle));
 	}
 
 	// Swap function which swaps the 0 button in both the puzzle array and the game array
@@ -232,20 +345,20 @@ public class JavaFXTemplate extends Application {
 
 
 		// Create MenuBar
-		Menu gameplay = new Menu("Game Play");
+		gameplay = new Menu("Game Play");
 		Menu options = new Menu("Options");
 		// Menu Items
-		MenuItem howToPlay = new MenuItem("how to play");
-		MenuItem newGame = new MenuItem("new game");
-		MenuItem exit = new MenuItem("exit");
+		MenuItem howToPlay = new MenuItem("How to play");
+		newGame = new MenuItem("New Game");
+		MenuItem exit = new MenuItem("Exit");
 		MenuItem h1 = new Menu("Run H1");
 		MenuItem h2 = new Menu("Run H2");
 
 		gameplay.getItems().addAll(h1, h2);
 		options.getItems().addAll(howToPlay, newGame, exit);
 
-		MenuBar menubar = new MenuBar();
-		menubar.getMenus().addAll(gameplay, options);
+		menuBar = new MenuBar();
+		menuBar.getMenus().addAll(gameplay, options);
 
 		gameBoard.setMinWidth(300);
 		gameBoard.setMaxWidth(400);
@@ -257,15 +370,16 @@ public class JavaFXTemplate extends Application {
 		hBox.setSpacing(10);
 		hBox.setPadding(new Insets(15, 12, 15, 12));
 		hBox.getChildren().addAll(gameLog);
-		hBox1.getChildren().addAll(menubar, text);
+		hBox1.getChildren().addAll(menuBar, text);
 		hBox1.setAlignment(Pos.CENTER);
 		gameBoard.setAlignment(Pos.CENTER);
 
-		// Assign menubar handlers
+		// Assign menuBar handlers
 		howToPlay.setOnAction(howToPlayHandler);
 		newGame.setOnAction(newGameHandler);
 		exit.setOnAction(closeHandler);
 		h1.setOnAction(h1Handler);
+		h2.setOnAction(h2Handler);
 
 		gamePane.setCenter(gameBoard);
 		gamePane.setBottom(hBox);
