@@ -1,66 +1,49 @@
-import javafx.animation.PauseTransition;
 import javafx.application.Application;
-
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
-import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
-
-import javafx.scene.control.Button;
-import javafx.scene.control.ListView;
-import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.VBox;
-import javafx.scene.text.Text;
-import javafx.stage.Stage;
-import javafx.stage.WindowEvent;
-import javafx.util.Duration;
-import javafx.animation.PauseTransition;
-import javafx.application.Application;
-import javafx.event.ActionEvent;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
-import javafx.event.EventHandler;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
+import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
-import javafx.util.Duration;
+import javafx.stage.WindowEvent;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.layout.HBox;
+import java.util.ArrayList;
 
-import java.util.Stack;
-
-import java.util.Stack;
 
 public class JavaFXTemplate extends Application {
-	private static final int picHeight = 500;
-	private static final int picWidth = 500;
-
 	// Game board dimensions
-	private static final int ROWS = 6;
-	private static final int COLUMNS = 7;
-
+	private static final int ROWS = 4;
+	private static final int COLUMNS = 4;
 	private Stage howToPlay;
-	private int buttonPresses;
-	private Button startGameBtn, exitGameBtn;
-	private EventHandler<ActionEvent> closeHandler, gameButtonHandler, reverseHandler,
-			orgThemeHandler, themeOneHandler, themeTwoHandler, howToPlayHandler, newGameHandler, endGameHandler;
-	private GridPane gameBoard;
+	private Button exitGameBtn;
+	private EventHandler<ActionEvent> closeHandler, h1Handler,
+			howToPlayHandler, newGameHandler;
 	private BorderPane gamePane;
-	private Text whichPlayer;
 	private ListView<String> gameLog;
-	private GameButton [][] gameArray = new GameButton[ROWS][COLUMNS];
-	private Stack<GameButton> moves = new Stack<>();
-	private PauseTransition pause = new PauseTransition(Duration.seconds(4));
+
+	// Project 4 declarations
+	private ArrayList<int []> puzzles = new ArrayList<>();
+	private int[] starterPuzzle;
+	private int[] gamePuzzle;
+	// [0] = x cord [1] = y cord
+	private int zeroIndexCords[] = new int[2];
+	private GridPane gameBoard = new GridPane();
+	private Button [][] gameArr = new Button[ROWS][COLUMNS];
+	private Boolean gamePlayEnabled = true;
+	private int[] solutionArray = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+
+	public JavaFXTemplate() {
+	}
 
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
@@ -81,37 +64,19 @@ public class JavaFXTemplate extends Application {
 
 		primaryStage.setTitle("Welcome to Puzzle15");
 
-		Parent root = FXMLLoader.load(getClass().getResource("/intro.fxml"));
-		Scene scene = new Scene(root);
+		// Project 4 declarations
+		puzzles.add(new int[] {2, 6, 10, 3, 1, 4, 7, 11, 8, 5, 9, 15, 12, 13, 14, 0});
+
+		starterPuzzle = puzzles.get(0);
+
+		gamePuzzle = puzzles.get(0);
 
 		gamePane = new BorderPane();
 
 		// Button declarations
-		startGameBtn = new Button("Play");
 		exitGameBtn = new Button("Exit");
 
 		// Handlers
-		orgThemeHandler = new EventHandler<ActionEvent>() {
-			@Override
-			public void handle(ActionEvent actionEvent) {
-				gamePane.setStyle("-fx-background-image: url(img1.jpg) ");
-			}
-		};
-
-		themeOneHandler = new EventHandler<ActionEvent>() {
-			@Override
-			public void handle(ActionEvent actionEvent) {
-				gamePane.setStyle("-fx-background-image: url(img2.jpg) ");
-			}
-		};
-
-		themeTwoHandler = new EventHandler<ActionEvent>() {
-			@Override
-			public void handle(ActionEvent actionEvent) {
-				gamePane.setStyle("-fx-background-image: url(img3.jpg) ");
-			}
-		};
-
 		closeHandler = new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent actionEvent) {
@@ -119,132 +84,30 @@ public class JavaFXTemplate extends Application {
 			}
 		};
 
-//		howToPlayHandler = new EventHandler<ActionEvent>() {
-//			@Override
-//			public void handle(ActionEvent actionEvent) {
-//				howToPlayScreen().show();
-//			}
-//		};
-
 		newGameHandler = new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent actionEvent) {
-				whichPlayer.setText("Player One");
-				gameLog.getItems().clear();
-				gameLog.getItems().add("New Game!");
-				GameLogic.clearBoard(gameArray);
-				moves.clear();
-				buttonPresses = 0;
 
 			}
 		};
 
-		endGameHandler = new EventHandler<ActionEvent>() {
+		howToPlayHandler = new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent actionEvent) {
-				GameLogic.enableAll(gameArray);
-				buttonPresses = 0;
-				moves.clear();
-				gamePane = new BorderPane();
-				primaryStage.setScene(gamePlayScreen());
+				howToPlayScreen().show();
 			}
 		};
 
-		gameButtonHandler = new EventHandler<ActionEvent>() {
+		h1Handler = new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent actionEvent) {
-				GameButton button = (GameButton)actionEvent.getSource();
-
-				// Game Logic
-				// Check if move is valid
-				if (!GameLogic.determineValidMove(button, gameArray)) {
-					gameLog.getItems().add("That was an invalid move. Try again");
-					return;
-				}
-				button.setDisable(true);
-
-				// Edits the button on the board to the player that pressed it
-				gameLog.getItems().add(whichPlayer.getText() + " placed a piece at cords: " + button.row + ", " + button.column);
-				buttonPresses++;
-
-				// Check for a win
-				int player;
-				if (whichPlayer.getText().equals("Player One")) {
-					player = 1;
-				}
-				else {
-					player = 2;
-				}
-
-				if (GameLogic.checkForWin(player, button, gameArray) || buttonPresses == 42) {
-					//GameLogic.disableAll(gameArray);
-					if (buttonPresses == 42) {
-						gameLog.getItems().add("Tie game");
-					} else {
-						gameLog.getItems().add(whichPlayer.getText() + " WON!");
-					}
-					pause.play();
-					pause.setOnFinished(e -> {
-						//primaryStage.setScene(winScreen(whichPlayer.getText(), buttonPresses));
-						primaryStage.show();
-					});
-					return;
-				}
-				// End Logic
-
-				if (whichPlayer.getText().equals("Player One")) {
-					button.player = 1;
-					button.setStyle("-fx-background-color: orange");
-					whichPlayer.setText("Player Two");
-				} else {
-					button.player = 2;
-					button.setStyle("-fx-background-color: purple");
-					whichPlayer.setText("Player One");
-				}
-
-				moves.push(button);
+				System.out.println("Hello");
 			}
 		};
-
-
-		reverseHandler = new EventHandler<ActionEvent>() {
-			@Override
-			public void handle(ActionEvent actionEvent) {
-				GameButton button;
-				if (moves.empty()) {
-					gameLog.getItems().add("You can't reverse a move if the board is empty!");
-					return;
-				}
-
-				if (whichPlayer.getText().equals("Player One")) {
-					whichPlayer.setText("Player Two");
-				} else {
-					whichPlayer.setText("Player One");
-				}
-
-				button = moves.pop();
-				gameLog.getItems().add("Player " + button.player + " reversed their move");
-				button.player = 0;
-				button.setDisable(false);
-				button.setStyle("-fx-background-color: transparent");
-				button.setStyle("-fx-border-color: black; -fx-border-width: 2px");
-				buttonPresses--;
-
-			}
-		};
-
 		// End Handlers
 
 		// Assign Handlers
 		exitGameBtn.setOnAction(closeHandler);
-		startGameBtn.setOnAction(e -> primaryStage.setScene(gamePlayScreen()));
-
-		// End Assign Handlers
-
-		//primaryStage.setScene(welcomeScreen());
-		//primaryStage.show();
-
-
 
 		primaryStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
 			@Override
@@ -254,92 +117,155 @@ public class JavaFXTemplate extends Application {
 			}
 		});
 
-		primaryStage.setScene(welcomeScreen());
+		Scene scene = gamePlayScreen();
+
+		// add keyboard functionality to screen
+		scene.addEventFilter(KeyEvent.KEY_RELEASED, keyEvent -> {
+			if (gamePlayEnabled) {
+				/*
+				W = up
+				A = left
+				S = down
+				D = right
+				zeroIndexCord[0] = x/row
+				zeroIndexCord[1] = y/col
+				 */
+				if (keyEvent.getCode().toString().equals("W")) {
+					if (zeroIndexCords[0] == 0) {
+						gameLog.getItems().add("Can not move up anymore");
+					} else {
+						gameLog.getItems().add("0 square moved up");
+						int x = zeroIndexCords[0] - 1;
+						int y = zeroIndexCords[1];
+						System.out.println(x + " : " + y);
+						swap(x, y);
+						zeroIndexCords[0]--;
+
+					}
+				} else if (keyEvent.getCode().toString().equals("A")) {
+					if (zeroIndexCords[1] == 0) {
+						gameLog.getItems().add("Can not move left anymore");
+					} else {
+						gameLog.getItems().add("0 square moved left");
+						int x = zeroIndexCords[0];
+						int y = zeroIndexCords[1] - 1;
+						System.out.println(x + " : " + y);
+						swap(x, y);
+						zeroIndexCords[1]--;
+
+					}
+				} else if (keyEvent.getCode().toString().equals("S")) {
+					if (zeroIndexCords[0] == 3) {
+						gameLog.getItems().add("Can not move down anymore");
+					} else {
+						gameLog.getItems().add("0 square moved down");
+						int x = zeroIndexCords[0] + 1;
+						int y = zeroIndexCords[1];
+						System.out.println(x + " : " + y);
+						swap(x, y);
+						zeroIndexCords[0]++;
+					}
+				} else if (keyEvent.getCode().toString().equals("D")) {
+					if (zeroIndexCords[1] == 3) {
+						gameLog.getItems().add("Can not move right anymore");
+					} else {
+						gameLog.getItems().add("0 square moved right");
+						int x = zeroIndexCords[0];
+						int y = zeroIndexCords[1] + 1;
+						System.out.println(x + " : " + y);
+						swap(x, y);
+						zeroIndexCords[1]++;
+					}
+				}
+			}
+		});
+
+		primaryStage.setScene(scene);
 		primaryStage.show();
 
 	}
 
-	// Sets the welcome screen
-	private Scene welcomeScreen() {
-		BorderPane pane = new BorderPane();
-		Text welcomeScreenText = new Text();
-		welcomeScreenText.setText("Welcome! Press PLAY to play or EXIT to exit");
-		Image pic = new Image("img1.jpg");
-		ImageView view = new ImageView(pic);
-		view.setFitHeight(picHeight);
-		view.setFitWidth(picWidth);
-		view.setPreserveRatio(true);
-		HBox hBox = new HBox();
-		VBox vBox = new VBox();
-		vBox.getChildren().add(welcomeScreenText);
-		hBox.getChildren().addAll(startGameBtn, exitGameBtn);
-		pane.setTop(vBox);
-		pane.setCenter(view);
-		pane.setBottom(hBox);
+	// Swap function which swaps the 0 button in both the puzzle array and the game array
+	private void swap (int x, int y) {
+		int target = Integer.parseInt(gameArr[x][y].getText());
+		System.out.println(target);
 
-		pane.setStyle("-fx-background-color: lightsalmon;");
-		vBox.setAlignment(Pos.CENTER);
-		hBox.setAlignment(Pos.CENTER);
-		hBox.setSpacing(10);
-		hBox.setPadding(new Insets(15, 12, 15, 12));
-		vBox.setPadding(new Insets(15, 12, 15, 12));
-		startGameBtn.setMinSize(70, 25);
-		exitGameBtn.setMinSize(70,25);
+		// find where the 0 and number being swapped to are in the array
+		int zero = -1;
+		int beingSwapped = -1;
+		for (int i = 0; i < gamePuzzle.length; i++) {
 
-		return new Scene(pane, 500, 500);
+			if (gamePuzzle[i] == 0) {
+				zero = i;
+			} else if (gamePuzzle[i] == target) {
+				beingSwapped = i;
+			}
+		}
+
+		// swap gamePuzzle array
+		gamePuzzle[zero] = gamePuzzle[beingSwapped];
+		gamePuzzle[beingSwapped] = 0;
+
+		Button button = gameArr[zeroIndexCords[0]][zeroIndexCords[1]];
+
+		button.setText(gameArr[x][y].getText());
+		button.setVisible(true);
+
+		gameArr[x][y].setText("0");
+		gameArr[x][y].setVisible(false);
+
+
+
 	}
 
 	// Creates the game play screen
 	private Scene gamePlayScreen() {
 		HBox hBox = new HBox();
-		HBox hBox1 = new HBox();
+		VBox hBox1 = new VBox();
 		gameLog = new ListView<>();
-		whichPlayer = new Text();
-		whichPlayer.setText("Player One");
-		gameBoard = new GridPane();
+
+		//Text Bod
+		Text text = new Text();
+		text.setText("Use W A S D keys to move");
+		text.setTextAlignment(TextAlignment.CENTER);
+		text.setFont(Font.font("Verdana", FontWeight.BOLD, 30));
+
 
 		// Create MenuBar
 		Menu gameplay = new Menu("Game Play");
-		Menu themes = new Menu("Themes");
 		Menu options = new Menu("Options");
 		// Menu Items
-		MenuItem reverse = new MenuItem("Reverse Move");
-		MenuItem orgTheme = new MenuItem("original theme");
-		MenuItem themeOne = new MenuItem("theme one");
-		MenuItem themeTwo = new MenuItem("theme two");
 		MenuItem howToPlay = new MenuItem("how to play");
 		MenuItem newGame = new MenuItem("new game");
 		MenuItem exit = new MenuItem("exit");
+		MenuItem h1 = new Menu("Run H1");
+		MenuItem h2 = new Menu("Run H2");
 
-		gameplay.getItems().add(reverse);
-		themes.getItems().addAll(orgTheme, themeOne, themeTwo);
+		gameplay.getItems().addAll(h1, h2);
 		options.getItems().addAll(howToPlay, newGame, exit);
 
 		MenuBar menubar = new MenuBar();
-		menubar.getMenus().addAll(gameplay, themes, options);
+		menubar.getMenus().addAll(gameplay, options);
 
 		gameBoard.setMinWidth(300);
 		gameBoard.setMaxWidth(400);
-		addGrid(gameBoard);
+		addGrid(gameBoard, starterPuzzle);
 
 		gameLog.setEditable(true);
 		gameLog.setPrefSize(300, 200);
 		hBox.setAlignment(Pos.CENTER);
 		hBox.setSpacing(10);
 		hBox.setPadding(new Insets(15, 12, 15, 12));
-		hBox.getChildren().addAll(gameLog, whichPlayer);
-		hBox1.getChildren().add(menubar);
+		hBox.getChildren().addAll(gameLog);
+		hBox1.getChildren().addAll(menubar, text);
 		hBox1.setAlignment(Pos.CENTER);
 		gameBoard.setAlignment(Pos.CENTER);
 
 		// Assign menubar handlers
-		reverse.setOnAction(reverseHandler);
-		orgTheme.setOnAction(orgThemeHandler);
-		themeOne.setOnAction(themeOneHandler);
-		themeTwo.setOnAction(themeTwoHandler);
 		howToPlay.setOnAction(howToPlayHandler);
 		newGame.setOnAction(newGameHandler);
 		exit.setOnAction(closeHandler);
+		h1.setOnAction(h1Handler);
 
 		gamePane.setCenter(gameBoard);
 		gamePane.setBottom(hBox);
@@ -350,21 +276,36 @@ public class JavaFXTemplate extends Application {
 	}
 
 	// Loads the game buttons into the grid pane and into an internal 2d array to be used for game logic
-	private void addGrid(GridPane pane) {
+	private void addGrid(GridPane pane, int[] arr) {
+
+		pane.getChildren().removeAll();
+		pane.getChildren().clear();
+		int index = 0;
+
 		for (int x = 0; x < COLUMNS; x++) {
 			for (int y = 0; y < ROWS; y++) {
-				GameButton button = new GameButton(x, y);
-				button.setOnAction(gameButtonHandler);
 
-				button.setMinSize(50, 50);
-				button.setStyle("-fx-background-color: transparent");
-				button.setStyle("-fx-border-color: black; -fx-border-width: 2px");
-				gameArray[y][x] = button;
-				pane.add(button, x, y);
+				gameArr[x][y] = new Button();
+				Button currBtn = gameArr[x][y];
+				currBtn.setFont(Font.font("Verdana", FontWeight.BOLD, 25));
+				currBtn.setText(String.valueOf(arr[index]));
+				currBtn.setMinSize(75, 75);
+				currBtn.setMaxSize(75,75);
+				currBtn.setStyle("-fx-background-color: lightgrey");
+				index++;
+
+				// Check to see if the button is the 0 button
+				if (gameArr[x][y].getText().equals("0")) {
+					currBtn.setVisible(false);
+					zeroIndexCords[0] = x;
+					zeroIndexCords[1] = y;
+				}
+
+				pane.add(currBtn, y, x);
 			}
 		}
-		pane.setHgap(10);
-		pane.setVgap(10);
+		pane.setHgap(3);
+		pane.setVgap(3);
 	}
 
 	// Displays a screen with instructions on how to play the game
