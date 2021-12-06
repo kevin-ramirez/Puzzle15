@@ -24,6 +24,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.Arrays;
+import java.util.Random;
+
 
 /*
 Notes for Stefan:
@@ -115,6 +117,15 @@ public class JavaFXTemplate extends Application {
 
 		// Project 4 declarations
 		puzzles.add(new int[] {2, 6, 10, 3, 1, 4, 7, 11, 8, 5, 9, 15, 12, 13, 14, 0});
+		puzzles.add(new int[] {14, 10, 6, 7, 4, 11, 15, 8, 12, 13, 2, 1, 9, 5, 3, 0});
+		puzzles.add(new int[] {15, 4, 6, 14, 1, 5, 11, 13, 12, 2, 7, 9, 10, 8, 3, 0});
+		puzzles.add(new int[] {15, 2, 1, 5, 8, 12, 6, 10, 3, 7, 4, 11, 9, 14, 13, 0});
+		puzzles.add(new int[] {9, 13, 7, 2, 10, 14, 4, 15, 3, 6, 12, 8, 11, 1, 5, 0});
+		puzzles.add(new int[] {11, 13, 12, 3, 2, 15, 14, 6, 4, 7, 5, 1, 10, 9, 8, 0});
+		puzzles.add(new int[] {11, 10, 1, 2, 8, 9, 14, 15, 3, 13, 12, 5, 6, 4, 7, 0});
+		puzzles.add(new int[] {5, 6, 9, 14, 11, 12, 8, 4, 15, 1, 10, 2, 7, 3, 13, 0});
+		puzzles.add(new int[] {7, 14, 15, 11, 1, 8, 6, 12, 5, 13, 2, 3, 10, 9, 4, 0});
+		puzzles.add(new int[] {4, 12, 15, 14, 6, 7, 2, 8, 13, 11, 10, 1, 3, 9, 5, 0});
 
 		gamePuzzle = puzzles.get(0);
 
@@ -134,7 +145,11 @@ public class JavaFXTemplate extends Application {
 		newGameHandler = new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent actionEvent) {
-
+				Random rand = new Random();
+				int randomNum = rand.nextInt((9) + 1);
+				gamePuzzle = puzzles.get(randomNum);
+				addGrid(gameBoard, gamePuzzle);
+				gameLog.getItems().clear();
 			}
 		};
 
@@ -310,10 +325,18 @@ public class JavaFXTemplate extends Application {
 			pause.setOnFinished(event -> {
 				gamePuzzle = currentState;
 				addGrid(gameBoard, currentState);
+				if (checkForWin(solutionArray, gamePuzzle)){
+					gamePlayEnabled = false;
+					gameplay.setDisable(true);
+					newGame.setDisable(false);
+					gameLog.getItems().add("Congratulations - this is a win!");
+					gameLog.getItems().add("Choose a new game or exit");
+				}
+
 				int time = pauseTime + 1;
 				gameLog.getItems().add("Showing move " + time);
 
-				if (time == 9) {
+				if (time == 10) {
 					gamePlayEnabled = true;
 					gameplay.setDisable(false);
 					newGame.setDisable(false);
@@ -366,8 +389,24 @@ public class JavaFXTemplate extends Application {
 		gameArr[x][y].setText("0");
 		gameArr[x][y].setVisible(false);
 
+		if (checkForWin(solutionArray, gamePuzzle)){
+			gamePlayEnabled = false;
+			gameplay.setDisable(true);
+			newGame.setDisable(false);
+			gameLog.getItems().add("Congratulations - this is a win!");
+			gameLog.getItems().add("Choose a new game or exit");
+		}
 
 
+
+	}
+
+	private Boolean checkForWin(int[] solutionArray, int [] gameBoard){
+		if (Arrays.equals(solutionArray, gameBoard)) {
+			gameLog.getItems().add("There is a win");
+			return true;
+		}
+		return false;
 	}
 
 	// Creates the game play screen
@@ -470,7 +509,7 @@ public class JavaFXTemplate extends Application {
 		button.setText("Thanks, now let me play!");
 		button.setOnAction(e->howToPlay.close());
 		Text text = new Text();
-		text.setText("Welcome to Connect 4!");
+		text.setText("Welcome to Puzzle 15!");
 
 		vbox.setSpacing(10);
 		vbox.setPadding(new Insets(15, 12, 15, 12));
@@ -492,12 +531,8 @@ public class JavaFXTemplate extends Application {
 	}
 
 	private static final String WORDS =
-			"This game is played by connecting 4 pieces in a row.\n" +
-					"This can be done diagonally, horizontally, or vertically.\n" +
-					"Moves are only valid when they are placed in a position that is at the bottom most column.\n" +
-					"For example, if the column chosen is empty that piece can only be placed at the bottom.\n" +
-					"If there is already a piece placed in that column then the piece currently being placed can\n" +
-					"Only be placed right above that piece.\n" +
-					"This is a 2 player game where players turns alternate. Have FUN!!!";
-
+			"This game is played by swapping the blank button with any other adjacent buttons.\n" +
+					"The goal is to display buttons 1-15 in order while having blank button in the top left corner.\n" +
+					"You can also run either h1 or h2 AI solutions if you get stuck, with them being limited to showing up 10 moves.\n" +
+					"Good luck!.\n";
 }
