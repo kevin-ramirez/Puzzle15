@@ -73,7 +73,7 @@ public class JavaFXTemplate extends Application {
 	private static final int COLUMNS = 4;
 	private Stage howToPlay;
 	private Button exitGameBtn;
-	private EventHandler<ActionEvent> closeHandler, h1Handler, h2Handler,
+	private EventHandler<ActionEvent> closeHandler, h1Handler, h2Handler, showBtnHandler,
 			howToPlayHandler, newGameHandler;
 	private BorderPane gamePane;
 	private ListView<String> gameLog;
@@ -90,6 +90,7 @@ public class JavaFXTemplate extends Application {
 	ArrayList<Node> solutionPath;
 	private Menu gameplay;
 	private MenuItem newGame;
+	MenuItem showSolutionBtn;
 
 	public JavaFXTemplate() {
 	}
@@ -163,9 +164,6 @@ public class JavaFXTemplate extends Application {
 		h1Handler = new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent actionEvent) {
-				gameplay.setDisable(true);
-				gamePlayEnabled = false;
-				newGame.setDisable(true);
 				gameLog.getItems().add("Running heuristicOne");
 				try {
 					Future<ArrayList<Node>> future = ex.submit(new A_IDS_A_15solver(gamePuzzle, "heuristicOne"));
@@ -189,6 +187,16 @@ public class JavaFXTemplate extends Application {
 				} catch (Exception e) {
 					System.out.println(e);
 				}
+			}
+		};
+
+		showBtnHandler = new EventHandler<ActionEvent>() {
+			@Override
+			public void handle(ActionEvent event) {
+				gameplay.setDisable(true);
+				gamePlayEnabled = false;
+				newGame.setDisable(true);
+				showSolution();
 			}
 		};
 		// End Handlers
@@ -288,8 +296,8 @@ public class JavaFXTemplate extends Application {
 						//System.out.println(Arrays.toString(arr));
 
 						Platform.runLater(() -> gameLog.getItems().add("AI solver has completed running."));
-						Platform.runLater(() -> gameLog.getItems().add("Showing Solution, do not touch anything."));
-						Platform.runLater(() -> showSolution());
+						Platform.runLater(() -> gameLog.getItems().add("Press show solution Button"));
+						Platform.runLater(() -> showSolutionBtn.setDisable(false));
 
 					} catch (Exception e) {
 						System.out.println(e);
@@ -340,6 +348,7 @@ public class JavaFXTemplate extends Application {
 					gamePlayEnabled = true;
 					gameplay.setDisable(false);
 					newGame.setDisable(false);
+					showSolutionBtn.setDisable(true);
 					gameLog.getItems().add("Done showing");
 				}
 
@@ -397,8 +406,6 @@ public class JavaFXTemplate extends Application {
 			gameLog.getItems().add("Choose a new game or exit");
 		}
 
-
-
 	}
 
 	private Boolean checkForWin(int[] solutionArray, int [] gameBoard){
@@ -431,8 +438,10 @@ public class JavaFXTemplate extends Application {
 		MenuItem exit = new MenuItem("Exit");
 		MenuItem h1 = new Menu("Run H1");
 		MenuItem h2 = new Menu("Run H2");
+		showSolutionBtn = new Menu("Show Solution");
+		showSolutionBtn.setDisable(true);
 
-		gameplay.getItems().addAll(h1, h2);
+		gameplay.getItems().addAll(h1, h2, showSolutionBtn);
 		options.getItems().addAll(howToPlay, newGame, exit);
 
 		MenuBar menuBar = new MenuBar();
@@ -458,6 +467,7 @@ public class JavaFXTemplate extends Application {
 		exit.setOnAction(closeHandler);
 		h1.setOnAction(h1Handler);
 		h2.setOnAction(h2Handler);
+		showSolutionBtn.setOnAction(showBtnHandler);
 
 		gamePane.setCenter(gameBoard);
 		gamePane.setBottom(hBox);
