@@ -91,6 +91,7 @@ public class JavaFXTemplate extends Application {
 	private Menu gameplay;
 	private MenuItem newGame;
 	MenuItem showSolutionBtn;
+	Text text = new Text();
 
 	public JavaFXTemplate() {
 	}
@@ -177,9 +178,6 @@ public class JavaFXTemplate extends Application {
 		h2Handler = new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent actionEvent) {
-				gameplay.setDisable(true);
-				gamePlayEnabled = false;
-				newGame.setDisable(true);
 				gameLog.getItems().add("Running heuristicTwo");
 				try {
 					Future<ArrayList<Node>> future = ex.submit(new A_IDS_A_15solver(gamePuzzle, "heuristicTwo"));
@@ -213,6 +211,8 @@ public class JavaFXTemplate extends Application {
 		});
 
 		Scene scene = gamePlayScreen();
+		gameBoard.setVisible(false);
+		gameLog.setVisible(false);
 
 		// add keyboard functionality to screen
 		scene.addEventFilter(KeyEvent.KEY_RELEASED, keyEvent -> {
@@ -277,8 +277,19 @@ public class JavaFXTemplate extends Application {
 			}
 		});
 
+
 		primaryStage.setScene(scene);
 		primaryStage.show();
+
+		PauseTransition pause = new PauseTransition(Duration.seconds(3));
+		pause.setOnFinished(event -> {
+			gameBoard.setVisible(true);
+			gameLog.setVisible(true);
+			text.setText("Use W A S D keys to move");
+			text.setTextAlignment(TextAlignment.CENTER);
+			text.setFont(Font.font("Verdana", FontWeight.BOLD, 30));
+		});
+		pause.play();
 
 	}
 
@@ -423,8 +434,7 @@ public class JavaFXTemplate extends Application {
 		gameLog = new ListView<>();
 
 		//Text Bod
-		Text text = new Text();
-		text.setText("Use W A S D keys to move");
+		text.setText("Welcome to Puzzle 15");
 		text.setTextAlignment(TextAlignment.CENTER);
 		text.setFont(Font.font("Verdana", FontWeight.BOLD, 30));
 
